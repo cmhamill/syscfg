@@ -38,3 +38,15 @@ need_cmd() {
         err $EX_UNAVAILABLE "need '$1' (command not found)"
     fi
 }
+
+print_usage() {
+    echo "$USAGE" | head -n 1 >&2
+    exit $EX_USAGE
+}
+
+print_help() {
+    echo "$USAGE"
+    exit $EX_OK
+}
+
+need_cmd getopt
