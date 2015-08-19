@@ -41,3 +41,8 @@ setup-crypted-boot-automounting \
     "$BOOT_KEYFILE_PATH" \
     || task_failed
 task_done
+
+need_cmd wget
+task_start "checking internet connectivity"
+wget -q --spider http://google.com || task_failed
+task_done
