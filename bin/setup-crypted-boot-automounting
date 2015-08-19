@@ -59,7 +59,7 @@ chmod 400 "$KEYFILE_PATH"
 # generated keyfile.
 CRYPTTAB_LINE="$MAPPER_TARGET UUID=$(cryptsetup luksUUID $DEVICE_PATH) $KEYFILE_PATH luks"
 if grep -q "^$MAPPER_TARGET" /etc/crypttab; then
-    sed -i "s/^${MAPPER_TARGET}.*/${CRYPTTAB_LINE}/" /etc/crypttab
+    sed -i "s|^${MAPPER_TARGET}.*|${CRYPTTAB_LINE}|" /etc/crypttab
 else
     echo "$CRYPTTAB_LINE" >> /etc/crypttab
 fi
