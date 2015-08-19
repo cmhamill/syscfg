@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source lib/lib.sh
+source "$(dirname "$(readlink -f "$0")")/lib/lib.sh"
 
 PATH="$(dirname "$(readlink -f "$0")")/bin:$PATH"
 
