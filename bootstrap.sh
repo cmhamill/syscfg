@@ -33,6 +33,8 @@ while true; do
     esac
 done
 
+[ "$(id -u)" -eq 0 ] || err $EX_SOFTWARE "must be run as root"
+
 need_cmd setup-crypted-boot-automounting
 task_start "configuring automounting of encrypted /boot"
 setup-crypted-boot-automounting \
@@ -54,5 +56,19 @@ task_done
 
 task_start "upgrading to latest packages in current release"
 apt-get upgrade || task_failed
+apt-get dist-upgrade || task_failed
+task_done
+
+task_start "changing /etc/apt/sources.list to point to testing"
+CODENAME="$(awk -F"[)(]+" '/VERSION=/ { print $2 }' /etc/os-release)"
+sed -i "s/${CODENAME}/testing/" /etc/apt/sources.list || task_failed
+task_done
+
+task_start "updating package cache again"
+apt-get update || task_failed
+task_done
+
+task_start "upgrading to testing"
+apt-get upgrade ||task_failed
 apt-get dist-upgrade || task_failed
 task_done
