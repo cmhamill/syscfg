@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Global constants.
+BOOT_DEVICE="/dev/sda2"
+BOOT_KEYFILE_PATH="/etc/boot_keyfile"
+
 source "$(dirname "$(readlink -f "$0")")/lib/lib.sh"
 
 PATH="$(dirname "$(readlink -f "$0")")/bin:$PATH"
@@ -28,3 +32,12 @@ while true; do
         *)          err $EX_SOFTWARE "internal error!";;
     esac
 done
+
+need_cmd setup-crypted-boot-automounting
+task_start "configuring automounting of encrypted /boot"
+setup-crypted-boot-automounting \
+    "$BOOT_DEVICE" \
+    "$(basename "$BOOT_DEVICE")_crypt" \
+    "$BOOT_KEYFILE_PATH" \
+    || task_failed
+task_done
