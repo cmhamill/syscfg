@@ -49,4 +49,17 @@ print_help() {
     exit $EX_OK
 }
 
+task_start() {
+    say ">>> ${1}..."
+}
+
+task_done() {
+    say "...done."
+}
+
+task_failed() {
+    say "...failed!"
+    exit $EX_UNAVAILABLE
+}
+
 need_cmd getopt
