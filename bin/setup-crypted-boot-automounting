@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+source ../lib/lib.sh
+
+PROG="setup-crypted-boot-automounting"
+USAGE="Usage: $PROG [-h] <device-path> <mapper-target> <keyfile-path>
+
+Configure an existing encrypted \`/boot' partition to be automatically
+decrypted and mounted on system startup.
+
+    -h, --help      print this help message
+    <device-path>   the path to the encrypted block device
+    <mapper-target> the name of the file in \`/dev/mapper' where the
+                    decrypted block device will be mapped
+    <keyfile-path>  the path to a keyfile which will be used for
+                    decryption of the parition on system startup
+"
+
+ARGS=$(getopt -o h --long help -n "$PROG" -- "$@")
+[ $? == 0 ] || print_usage
+eval set -- "$ARGS"
+
+while true; do
+    case "$1" in
+        -h|--help)  print_help;;
+        --)         shift; break;;
+        *)          err $EX_SOFTWARE "internal error!";;
+    esac
+done
+
+KEYSLOT=1
+DEVICE_PATH="${1:-}";   shift
+MAPPER_TARGET="${1:-}"; shift
+KEYFILE_PATH="${1:-}";  shift
+
+if [[ -z "$DEVICE_PATH" || -z "$MAPPER_TARGET" || -z "$KEYFILE_PATH" ]]; then
+    say_err "missing argument(s)"
+    print_usage
+fi
+
+# Check prerequisites.
+[ "$(id -u)" -eq 0 ] || err $EX_SOFTWARE "must be run as root"
+need_cmd cryptsetup
+need_cmd update-grub
+
+# If there's not keyfile, create one and add it as a key to the LUKS
+# header of the partition containing the encrypted boot filesystem.
+if [ ! -f "$KEYFILE_PATH" ]; then
+    dd bs=512 count=4 if=/dev/urandom of="$KEYFILE_PATH"
+    cryptsetup luksKillSlot "$DEVICE_PATH" "$KEYSLOT"
+    cryptsetup luksAddKey "$DEVICE_PATH" "$KEYFILE_PATH" --key-slot "$KEYSLOT"
+fi
+
+# Nobody needs to read this thing but root.
+chown root:root "$KEYFILE_PATH"
+chmod 400 "$KEYFILE_PATH"
+
+# Tell cryptsetup to decrypt the partition on system startup using the
+# generated keyfile.
+CRYPTTAB_LINE="$MAPPER_TARGET UUID=$(cryptsetup luksUUID $DEVICE_PATH) $KEYFILE_PATH luks"
+if grep -q "^$MAPPER_TARGET" /etc/crypttab; then
+    sed -i "s/^${MAPPER_TARGET}.*/${CRYPTTAB_LINE}/" /etc/crypttab
+else
+    echo "$CRYPTTAB_LINE" >> /etc/crypttab
+fi
+
+# Tell grub to install the necessary modules to decrypt the boot
+# partition.
+if grep -q "^GRUB_ENABLE_CRYPTODISK" /etc/default/grub; then
+    sed -i "s/^GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/" /etc/default/grub
+else
+    echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
+fi
+
+# Tell the system to mount the decrypted boot partition on system
+# startup.
+if grep -q "^[^#].*\s/boot\s" /etc/fstab; then
+    sed -i "s|^[^#].*\s/boot\s.*|/dev/mapper/${MAPPER_TARGET}	/boot	ext4	relatime,nodev,nosuid,noexec	0	2|" /etc/fstab
+else
+    echo "/dev/mapper/${MAPPER_TARGET}	/boot	ext4	relatime,nodev,nosuid,noexec	0	2" >> /etc/fstab
+fi
+
+# Update grub.
+update-grub
