@@ -46,3 +46,13 @@ need_cmd wget
 task_start "checking internet connectivity"
 wget -q --spider http://google.com || task_failed
 task_done
+
+need_cmd apt-get
+task_start "updating package cache"
+apt-get update || task_failed
+task_done
+
+task_start "upgrading to latest packages in current release"
+apt-get upgrade || task_failed
+apt-get dist-upgrade || task_failed
+task_done
