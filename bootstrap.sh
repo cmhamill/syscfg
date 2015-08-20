@@ -69,7 +69,7 @@ apt-get update || task_failed
 task_done
 
 task_start "upgrading to testing"
-apt-get upgrade ||task_failed
+apt-get upgrade || task_failed
 apt-get dist-upgrade || task_failed
 task_done
 
