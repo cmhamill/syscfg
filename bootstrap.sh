@@ -72,3 +72,19 @@ task_start "upgrading to testing"
 apt-get upgrade ||task_failed
 apt-get dist-upgrade || task_failed
 task_done
+
+task_start "updating package cache yet again"
+apt-get update || task_failed
+task_done
+
+task_start "removing unused packages"
+apt-get autoremove --purge || task_failed
+task_done
+
+task_start "purging removed packages"
+apt-get purge $(dpkg -l | awk '/^rc/ { print $2 }') || task_failed
+task_done
+
+task_start "cleaning obsolete packages from cache"
+apt-get autoclean || task_failed
+task_done
