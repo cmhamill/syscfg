@@ -88,3 +88,12 @@ task_done
 task_start "cleaning obsolete packages from cache"
 apt-get autoclean || task_failed
 task_done
+
+task_start "rebooting into upgraded system"
+read -p "reboot now? (y/n) [n]:" REBOOT_NOW
+if [[ "${REBOOT_NOW:-n}" == y* ]]; then
+    shutdown -r now
+else
+    say "reboot machine to ensure successful boot configuration"
+fi
+exit $EX_OK
