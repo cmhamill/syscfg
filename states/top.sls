@@ -4,3 +4,4 @@ base:
     - apt
     - keyboard
     - console
+    - xorg
