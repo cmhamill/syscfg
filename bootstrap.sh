@@ -94,18 +94,20 @@ task_done
 
 task_start "installing salt-minion"
 apt-get install salt-minion || task_failed
+systemctl stop salt-minion
+systemctl disable salt-minion
 task_done
 
 task_start "configuring salt"
-echo >> /etc/salt/minion.d/00-file_client <<EOF
+cat >> /etc/salt/minion.d/00-file_client.conf <<EOF
 file_client: local
 EOF
-echo >> /etc/salt/minion.d/00-file_roots <<EOF
+cat >> /etc/salt/minion.d/10-file_roots.conf <<EOF
 file_roots:
   base:
     - ${BASEDIR}/states
 EOF
-echo >> /etc/salt/minion.d/00-pillar_roots <<EOF
+cat >> /etc/salt/minion.d/10-pillar_roots.conf <<EOF
 pillar_roots:
   base:
     - ${BASEDIR}/pillars
