@@ -90,6 +90,26 @@ task_start "cleaning obsolete packages from cache"
 apt-get autoclean || task_failed
 task_done
 
+task_start "installing salt-minion"
+apt-get install salt-minion || task_failed
+task_done
+
+task_start "configuring salt"
+echo >> /etc/salt/minion.d/00-file_client <<EOF
+file_client: local
+EOF
+echo >> /etc/salt/minion.d/00-file_roots <<EOF
+file_roots:
+  base:
+    - ${BASEDIR}/states
+EOF
+echo >> /etc/salt/minion.d/00-pillar_roots <<EOF
+pillar_roots:
+  base:
+    - ${BASEDIR}/pillars
+EOF
+task_done
+
 task_start "rebooting into upgraded system"
 read -p "reboot now? (y/n) [n]:" REBOOT_NOW
 if [[ "${REBOOT_NOW:-n}" == y* ]]; then
