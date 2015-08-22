@@ -4,9 +4,10 @@
 BOOT_DEVICE="/dev/sda2"
 BOOT_KEYFILE_PATH="/etc/boot_keyfile"
 
-source "$(dirname "$(readlink -f "$0")")/lib/lib.sh"
+BASEDIR="$(dirname "$(readlink -f "$0")")"
 
-PATH="$(dirname "$(readlink -f "$0")")/bin:$PATH"
+source "${BASEDIR}/lib/lib.sh"
+PATH="${BASEDIR}/bin:$PATH"
 
 PROG="bootstrap.sh"
 USAGE="Usage: $PROG [-h]
