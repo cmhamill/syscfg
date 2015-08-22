@@ -62,7 +62,9 @@ task_done
 
 task_start "changing /etc/apt/sources.list to point to testing"
 CODENAME="$(awk -F"[)(]+" '/VERSION=/ { print $2 }' /etc/os-release)"
-sed -i "s/${CODENAME}/testing/" /etc/apt/sources.list || task_failed
+if ! grep -q testing /etc/apt/sources.list; then
+    sed -i "s/${CODENAME}/testing/" /etc/apt/sources.list || task_failed
+fi
 task_done
 
 task_start "updating package cache again"
